@@ -22,7 +22,7 @@ public class AppConfig {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**")
-                        .allowedOriginPatterns("http://localhost:5173", "http://localhost:9090") // allow both dev and Tomcat frontend
+                        .allowedOriginPatterns("http://localhost:5173", "http://localhost:9090") // dev + Tomcat
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                         .allowedHeaders("*")
                         .allowCredentials(true);
