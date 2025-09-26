@@ -42,7 +42,7 @@ public class AppConfig {
             .and()
             .csrf().disable()
             .authorizeHttpRequests(auth -> auth
-                .anyRequest().permitAll() // allow all requests (customize if needed)
+                .anyRequest().permitAll()
             )
             .httpBasic();
         return http.build();
