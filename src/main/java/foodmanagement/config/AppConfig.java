@@ -7,6 +7,9 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.provisioning.InMemoryUserDetailsManager;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -21,29 +24,43 @@ import java.util.List;
 @EnableWebSecurity
 public class AppConfig {
 
+    // Password encoder
     @Bean
     public BCryptPasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
+    // In-memory user for testing
+    @Bean
+    public InMemoryUserDetailsManager userDetailsService(BCryptPasswordEncoder passwordEncoder) {
+        UserDetails user = User.builder()
+                .username("admin")
+                .password(passwordEncoder.encode("admin123"))
+                .roles("ADMIN")
+                .build();
+        return new InMemoryUserDetailsManager(user);
+    }
+
+    // Security filter chain
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/**").permitAll()  // Allow all requests
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                .anyRequest().permitAll()
             );
         
         return http.build();
     }
 
+    // CORS configuration - REMOVED the problematic method call
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setApplyPermitDefaultValues(false);
         
-        // Allow specific origins
+        // Use allowedOrigins instead of allowedOriginPatterns for older Spring versions
         configuration.setAllowedOrigins(Arrays.asList(
             "http://localhost:9090",
             "http://localhost:5173"
@@ -53,11 +70,7 @@ public class AppConfig {
             "GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD", "PATCH"
         ));
         
-        configuration.setAllowedHeaders(Arrays.asList(
-            "Authorization", "Content-Type", "X-Requested-With", "Accept", 
-            "Origin", "Access-Control-Request-Method", "Access-Control-Request-Headers",
-            "X-CSRF-TOKEN"
-        ));
+        configuration.setAllowedHeaders(Arrays.asList("*"));
         
         configuration.setExposedHeaders(Arrays.asList(
             "Authorization", "Content-Type", "Access-Control-Allow-Origin", 
@@ -72,7 +85,7 @@ public class AppConfig {
         return source;
     }
 
-    // High priority CORS filter
+    // Additional CORS filter
     @Bean
     public FilterRegistrationBean<CorsFilter> corsFilter() {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
