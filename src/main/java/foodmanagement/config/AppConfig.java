@@ -11,19 +11,18 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.http.HttpMethod;
 
 import java.util.List;
 
 @Configuration
 public class AppConfig {
 
-    // Password encoder bean
     @Bean
     public BCryptPasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
-    // In-memory user for testing
     @Bean
     public InMemoryUserDetailsManager userDetailsService(BCryptPasswordEncoder passwordEncoder) {
         UserDetails user = User.builder()
@@ -34,7 +33,6 @@ public class AppConfig {
         return new InMemoryUserDetailsManager(user);
     }
 
-    // Security filter chain
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http, CorsConfigurationSource corsConfigurationSource) throws Exception {
         http
@@ -42,20 +40,17 @@ public class AppConfig {
             .and()
             .csrf().disable()
             .authorizeHttpRequests(auth -> auth
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()  // Allow preflight requests
                 .anyRequest().permitAll()
             )
             .httpBasic();
         return http.build();
     }
 
-    // Global CORS configuration
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(List.of(
-                "http://localhost:5173",
-                "http://localhost:9090"
-        ));
+        configuration.setAllowedOriginPatterns(List.of("*"));  // Allow all origins temporarily
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
