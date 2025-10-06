@@ -3,6 +3,7 @@ package foodmanagement.service;
 import foodmanagement.model.Customer;
 import foodmanagement.repository.CustomerRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -14,9 +15,11 @@ public class CustomerService {
     @Autowired
     private CustomerRepository customerRepository;
 
-    // Register customer with validation
+    @Autowired
+    private BCryptPasswordEncoder passwordEncoder;
+
+    // Register customer
     public Customer registerCustomer(Customer customer) {
-        // Validate required fields
         if (customer.getUsername() == null || customer.getUsername().trim().isEmpty()) {
             throw new RuntimeException("Username cannot be empty");
         }
@@ -27,20 +30,19 @@ public class CustomerService {
             throw new RuntimeException("Password cannot be empty");
         }
         if (customer.getMobile() == null || !customer.getMobile().matches("\\d{10}")) {
-            throw new RuntimeException("Phone number must be exactly 10 digits and contain only numbers");
+            throw new RuntimeException("Mobile must be exactly 10 digits");
         }
 
-        // Check if email already exists
         if (customerRepository.findByEmail(customer.getEmail()).isPresent()) {
             throw new RuntimeException("Email already exists: " + customer.getEmail());
         }
-
-        // Check if username already exists
         if (customerRepository.findByUsername(customer.getUsername()).isPresent()) {
             throw new RuntimeException("Username already exists: " + customer.getUsername());
         }
 
-        // Save customer (password stored as plain text - NOT recommended for production)
+        // Hash password
+        customer.setPassword(passwordEncoder.encode(customer.getPassword()));
+
         return customerRepository.save(customer);
     }
 
@@ -54,10 +56,10 @@ public class CustomerService {
         return customerRepository.findById(id);
     }
 
-    // Login customer using username (plain-text password)
+    // Login
     public boolean loginCustomer(String username, String password) {
         Optional<Customer> customerOpt = customerRepository.findByUsername(username);
-        return customerOpt.isPresent() && customerOpt.get().getPassword().equals(password);
+        return customerOpt.isPresent() && passwordEncoder.matches(password, customerOpt.get().getPassword());
     }
 
     // Delete customer

@@ -18,12 +18,12 @@ public class AdminService {
     @Autowired
     private EmailService emailService;
 
-    private BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+    @Autowired
+    private BCryptPasswordEncoder passwordEncoder;  // use the AppConfig bean
 
     private final Map<String, CodeInfo> codeStore = new HashMap<>();
     private static final long CODE_EXPIRY_TIME = 5 * 60 * 1000; // 5 min
     private static final String FOUNDER_EMAIL = "aditiwari256@example.com";
-
     private static class CodeInfo {
         String code;
         long timestamp;
