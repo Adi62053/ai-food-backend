@@ -56,10 +56,20 @@ public class CustomerService {
         return customerRepository.findById(id);
     }
 
-    // Login
+    // Login logic (kept for reference, can be used elsewhere)
     public boolean loginCustomer(String username, String password) {
         Optional<Customer> customerOpt = customerRepository.findByUsername(username);
         return customerOpt.isPresent() && passwordEncoder.matches(password, customerOpt.get().getPassword());
+    }
+
+    // Get customer by username ✅ new method
+    public Optional<Customer> getCustomerByUsername(String username) {
+        return customerRepository.findByUsername(username);
+    }
+
+    // Check password ✅ new method
+    public boolean checkPassword(String rawPassword, String encodedPassword) {
+        return passwordEncoder.matches(rawPassword, encodedPassword);
     }
 
     // Delete customer

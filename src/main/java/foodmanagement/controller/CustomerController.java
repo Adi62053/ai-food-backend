@@ -6,18 +6,18 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.List;
 
-@CrossOrigin(origins = "http://localhost:5173") // Allow requests from React frontend
+@CrossOrigin(origins = "http://localhost:5173")
 @RestController
-@RequestMapping("/customers") // Include /api context
+@RequestMapping("/customers")
 public class CustomerController {
 
     @Autowired
     private CustomerService customerService;
 
-    // Register a new customer
     @PostMapping("/register")
     public ResponseEntity<String> registerCustomer(@RequestBody Customer customer) {
         try {
@@ -28,28 +28,33 @@ public class CustomerController {
         }
     }
 
-    // Get all customers
+    @PostMapping("/login")
+    public ResponseEntity<?> loginCustomer(@RequestBody Customer loginData) {
+        Optional<Customer> customerOpt = customerService.getCustomerByUsername(loginData.getUsername());
+
+        if (customerOpt.isPresent() &&
+            customerService.checkPassword(loginData.getPassword(), customerOpt.get().getPassword())) {
+
+            return ResponseEntity.ok(Map.of(
+                "username", customerOpt.get().getUsername(),
+                "email", customerOpt.get().getEmail(),
+                "customerId", customerOpt.get().getCustomerId()
+            ));
+        } else {
+            return ResponseEntity.status(401).body(Map.of("error", "Invalid username or password"));
+        }
+    }
+
     @GetMapping
     public ResponseEntity<List<Customer>> getAllCustomers() {
         return ResponseEntity.ok(customerService.getAllCustomers());
     }
 
-    // Get customer by ID
     @GetMapping("/{id}")
     public ResponseEntity<Optional<Customer>> getCustomerById(@PathVariable Long id) {
         return ResponseEntity.ok(customerService.getCustomerById(id));
     }
 
-    // Login using username and password
-    @PostMapping("/login")
-    public ResponseEntity<String> loginCustomer(@RequestBody Customer loginData) {
-        boolean isValid = customerService.loginCustomer(loginData.getUsername(), loginData.getPassword());
-        return isValid
-                ? ResponseEntity.ok("Login successful!")
-                : ResponseEntity.status(401).body("Invalid username or password");
-    }
-
-    // Delete customer by ID
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteCustomer(@PathVariable Long id) {
         customerService.deleteCustomer(id);
