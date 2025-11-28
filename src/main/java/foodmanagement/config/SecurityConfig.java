@@ -2,14 +2,13 @@ package foodmanagement.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import java.util.List;
+import java.util.Arrays;
 
 @Configuration
 public class SecurityConfig {
@@ -20,30 +19,40 @@ public class SecurityConfig {
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // allow preflight
-                .requestMatchers("/admins/**").permitAll()
-                .requestMatchers("/customers/**").permitAll()
-                .requestMatchers("/orders/**").permitAll() // ✅ ADDED: Allow orders endpoints
-                .requestMatchers("/api/**").permitAll()    // ✅ ADDED: Allow api endpoints (for future use)
-                .anyRequest().authenticated()
-            )
-            .httpBasic().disable()
-            .formLogin().disable()
-            .logout().disable();
+                // Allow ALL OPTIONS requests first (preflight)
+                .requestMatchers("/**").permitAll() // TEMPORARY - allow everything
+            );
 
         return http.build();
     }
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://localhost:5173")); // your React frontend
-        config.setAllowedMethods(List.of("GET","POST","PUT","DELETE","OPTIONS"));
-        config.setAllowedHeaders(List.of("*"));
-        config.setAllowCredentials(true); // only if sending cookies/auth headers
-
+        CorsConfiguration configuration = new CorsConfiguration();
+        
+        // Allow your React frontend
+        configuration.setAllowedOrigins(Arrays.asList(
+            "http://localhost:5173", 
+            "http://localhost:3000",
+            "http://127.0.0.1:5173"
+        ));
+        
+        // Allow all methods
+        configuration.setAllowedMethods(Arrays.asList(
+            "GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"
+        ));
+        
+        // Allow all headers
+        configuration.setAllowedHeaders(Arrays.asList("*"));
+        
+        // Allow credentials
+        configuration.setAllowCredentials(true);
+        
+        // Set max age
+        configuration.setMaxAge(3600L);
+        
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", config);
+        source.registerCorsConfiguration("/**", configuration);
         return source;
     }
 }
